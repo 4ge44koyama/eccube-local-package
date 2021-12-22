@@ -259,6 +259,39 @@ $ exit
 
 <br>
 
+次にEC-CUBEを初期状態で動かせるようにしていきます。
+- コンソールから起動中の仮想マシンにsshで入る
+  ```
+  $ vagrant ssh
+  ```
+- Apacheのドキュメントルートをec-cubeに変更する
+  ```
+  // 設定ファイルを開く
+  $ sudo vim /etc/apache2/sites-available/000-default.conf
+
+  // INSERTモードに切り替えてから下記の修正をして上書き保存
+  # DocumentRoot /var/www/html
+  DocumentRoot /var/www/ec-cube
+  ```
+- Apacheを再起動する
+  ```
+  $ sudo systemctl restart apache2
+  ```
+- ec-cubeインストールコマンドを実行
+  ```
+  $ cd /var/www/ec-cube
+
+  $ sudo bin/console e:i
+
+  // プロビジョニング用のshellで登録した内容を入力(コピペでOKです)
+  Database Url
+  > mysql://eccube:secret@127.0.0.1/eccube_db
+
+  // Mailer Urlは今回設定しないのでエンター
+  // Auth Magicはそのままでエンター
+  ```
+
+
 ここからがやや面倒なのですが、VSCodeのRemote Developmentは接続する仮想マシンごとにVSCodeのプラグインをインストールしなければいけません。そのため、今回紹介するのは必要最低限ではありますが、下記プラグインをeccube-defaultに接続しているVSCodeでもインストールしておきましょう。<br>
 ※プラグインによってはローカルでインストールしているものが既に仮想マシンでも有効化されている場合もあります。
 
@@ -279,6 +312,7 @@ $ exit
 
 ポイントはRemote Developmentでssh接続して仮想マシンをVSCodeで操作しているユーザーがvagrantユーザーという点です。
 
+まずはカスタマイズ用にユーザー独自プラグインを作成してみます
 # 参考
 
 - [【ペチオブ】仮想環境ハンズオン 第3回 Vagrant編](https://qiita.com/ucan-lab/items/e14a26081229c8bef98a)
@@ -288,3 +322,4 @@ $ exit
   - [コマンドラインからインストールする](https://doc4.ec-cube.net/quickstart/command_install)
 - [EC-CUBE - Github](https://github.com/EC-CUBE/ec-cube)
 - [Ubuntu 20.04にApache Webサーバーをインストールする方法](https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-ubuntu-20-04-ja)
+- [Ubuntu+Apache2の設定ファイルの場所とか構成とかメモ](https://penpen-dev.com/blog/ubuntuapache2/)
