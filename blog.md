@@ -13,17 +13,17 @@
 <br>
 
 今回のポイントはVagrantのディレクトリマウントを使用せずにサーバー(仮想マシン)の中で直接ファイル操作を行うというところです。
-
+今回この構成で構築した時のメリットはいくつかあるのですが
 - ディレクトリマウントをするよりもファイル編集時のレスポンスが早い
 - 仮想マシン側のVSCodeに拡張プラグインを導入するだけで言語(FW)などの補完がきく
 - Vagrant+VirtualBoxの構成なのでホストマシン(Mac,Windows)の環境差分を吸収できる
 - boxファイルをパッケージして共有することで、メンバー間で発生しがちな環境差分を吸収できる
 - 仮想マシンの構築手順をAnsible等のプロビジョニングツールで自動化することで本番環境にも適用できる
-
+などが挙げられるかと思います。
 <br>
 
 # 検証環境
-- MacOS Catalina
+- MacOS Catalina, Windows10
 - VirtualBox 6.1.30
 - Vagrant 2.2.19
 - VSCode
@@ -182,6 +182,11 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/focal64"
   config.vm.network "forwarded_port", guest: 80, host: 8000
   config.vm.provision :init, type: "shell", path: "init.sh"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "4096"
+    vb.cpus = "2"
+  end
 end
 ```
 
@@ -272,6 +277,15 @@ $ exit
   // INSERTモードに切り替えてから下記の修正をして上書き保存
   # DocumentRoot /var/www/html
   DocumentRoot /var/www/ec-cube
+  <Directory /var/www/ec-cube/>
+    RewriteEngine On
+  </Directory>
+  ```
+- Apacheのmod_rewriteを有効化とし再起動する
+  ```
+  $ sudo a2enmod rewrite
+
+  $ sudo systemctl restart apache2
   ```
 - Apacheを再起動する
   ```
@@ -290,7 +304,13 @@ $ exit
   // Mailer Urlは今回設定しないのでエンター
   // Auth Magicはそのままでエンター
   ```
-
+<br>
+ここまでの手順が終わったらブラウザで http://localhost:8000 へアクセスしてみましょう。<br>
+EC-CUBEデフォルトTOPページが表示されればOKです<br>
+管理画面はデフォルトだと http://localhost:8000/admin です。<br>
+id: admin<br>
+pass: password<br>
+<br>
 
 ここからがやや面倒なのですが、VSCodeのRemote Developmentは接続する仮想マシンごとにVSCodeのプラグインをインストールしなければいけません。そのため、今回紹介するのは必要最低限ではありますが、下記プラグインをeccube-defaultに接続しているVSCodeでもインストールしておきましょう。<br>
 ※プラグインによってはローカルでインストールしているものが既に仮想マシンでも有効化されている場合もあります。
@@ -310,9 +330,19 @@ $ exit
 
 <br>
 
-ポイントはRemote Developmentでssh接続して仮想マシンをVSCodeで操作しているユーザーがvagrantユーザーという点です。
+ポイントはRemote Developmentでssh接続して仮想マシンをVSCodeで操作しているユーザーがvagrantユーザーという点です。<br>
+なのでまずはVSCode側で直接ファイルを編集できるようにファイル/ディレクトリの権限を変更する必要があります。<br>
+<br>
 
-まずはカスタマイズ用にユーザー独自プラグインを作成してみます
+```
+$ sudo chown -R vagrant:www-data /var/www/
+```
+これでVSCode側でファイル内容を変更やファイルの追加・削除ができるようになります。<br>
+<br>
+
+〜以下略〜
+<br>
+
 # 参考
 
 - [【ペチオブ】仮想環境ハンズオン 第3回 Vagrant編](https://qiita.com/ucan-lab/items/e14a26081229c8bef98a)
@@ -323,3 +353,4 @@ $ exit
 - [EC-CUBE - Github](https://github.com/EC-CUBE/ec-cube)
 - [Ubuntu 20.04にApache Webサーバーをインストールする方法](https://www.digitalocean.com/community/tutorials/how-to-install-the-apache-web-server-on-ubuntu-20-04-ja)
 - [Ubuntu+Apache2の設定ファイルの場所とか構成とかメモ](https://penpen-dev.com/blog/ubuntuapache2/)
+- [Ubuntu版Apache2でmod_rewriteを有効にする](https://qiita.com/u-akihiro/items/c7a5bb38c34858d00c2a)
